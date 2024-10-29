@@ -1,15 +1,36 @@
-from vnstock3 import Vnstock 
-import os
+import pandas as pd
+import numpy as np
 
-folder_path = "data"
-Stock_symbol = "ACB"
-source = "VCI"
-start_date = "2024-06-01"
-end_date = "2024-10-28"
-
-stock = Vnstock().stock(symbol=Stock_symbol, source=source) # Định nghĩa biến vnstock lưu thông tin mã chứng khoán & nguồn dữ liệu bạn sử dụng
-df = stock.quote.history(start=start_date, end=end_date, interval='1D') # Thiết lập thời gian tải dữ liệu và khung thời gian tra cứu là 1 ngày
-csv_path = f"{Stock_symbol}_{source}_{start_date}_{end_date}.csv"
-file_path = os.path.join(folder_path,csv_path)
-df.to_csv(file_path,index = False)
-
+class StockData:
+    def __init__(self, file_path, ma_windows=[5, 10, 20]):
+        """
+        Khởi tạo đối tượng StockData.
+        
+        :param file_path: Đường dẫn đến tệp CSV chứa dữ liệu chứng khoán.
+        :param ma_windows: Danh sách các cửa sổ MA cần tính toán.
+        """
+        self.file_path = file_path
+        self.ma_windows = ma_windows
+        self.data = self._load_data()
+        self._compute_moving_averages()
+        
+    def _load_data(self):
+        """
+        Đọc dữ liệu từ tệp CSV.
+        """
+        df = pd.read_csv(self.file_path, parse_dates=['time'])
+        df.sort_values('time', inplace=True)
+        df.reset_index(drop=True, inplace=True)
+        return df
+    
+    def _compute_moving_averages(self):
+        """
+        Tính toán các chỉ báo Moving Average và thêm vào DataFrame.
+        """
+        for window in self.ma_windows:
+            self.data[f'MA_{window}'] = self.data['close'].rolling(window=window).mean()
+        self.data.dropna(inplace=True)  # Loại bỏ các hàng có giá trị NaN do MA
+        self.data.reset_index(drop=True, inplace=True)
+    
+    def get_data(self):
+        return self.data
