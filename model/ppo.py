@@ -11,22 +11,28 @@ class ActorCritic(nn.Module):
         super(ActorCritic, self).__init__()
         self.device = device
         self.state_dim = state_dim
-        
+        self.hidden_num = 64
+        # actor
         self.actor = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, action_dim),
+            nn.Linear(state_dim, self.hidden_num),
+            nn.Tanh(),
+            nn.Dropout(0.2),
+            nn.Linear(self.hidden_num, self.hidden_num),
+            nn.Tanh(),
+            nn.Dropout(0.2),
+            nn.Linear(self.hidden_num, action_dim),
             nn.Tanh()
         )
-        
+
+        # critic
         self.critic = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1)
+            nn.Linear(state_dim, self.hidden_num),
+            nn.Tanh(),
+            nn.Dropout(0.2),
+            nn.Linear(self.hidden_num, self.hidden_num),
+            nn.Tanh(),
+            nn.Dropout(0.2),
+            nn.Linear(self.hidden_num, 1)
         )
         
         self.action_var = torch.full((action_dim,), action_std_init**2).to(self.device)
@@ -67,7 +73,7 @@ class RolloutBuffer:
         self.is_terminals = []
 
 class PPO:
-    def __init__(self, state_dim, action_dim, action_std, lr_actor, lr_critic, gamma, epochs, batch_size, device="cpu", checkpoint_dir=None):
+    def __init__(self, state_dim, action_dim, action_std, lr_actor, lr_critic, gamma, epochs, batch_size, device="cpu"):
         self.device = device
         self.buffer = RolloutBuffer()
         self.policy = ActorCritic(state_dim, action_dim, action_std, device).to(self.device)
@@ -78,20 +84,7 @@ class PPO:
         self.gamma = gamma
         self.epochs = epochs
         self.batch_size = batch_size
-        self.checkpoint_dir = checkpoint_dir
         self.best_val_profit = -float('inf')
-
-        # Define paths for best and last model checkpoints
-        if self.checkpoint_dir:
-            self.best_model_dir = os.path.join(self.checkpoint_dir, "best_model")
-            self.last_model_dir = os.path.join(self.checkpoint_dir, "last_model")
-            os.makedirs(self.best_model_dir, exist_ok=True)
-            os.makedirs(self.last_model_dir, exist_ok=True)
-            self.best_checkpoint_path = os.path.join(self.best_model_dir, "best_model.pth")
-            self.last_checkpoint_path = os.path.join(self.last_model_dir, "last_model.pth")
-        else:
-            self.best_checkpoint_path = None
-            self.last_checkpoint_path = None
 
     def select_action(self, state, store=True):
         state = torch.FloatTensor(state).to(self.device)
@@ -125,7 +118,7 @@ class PPO:
         old_actions = torch.stack(self.buffer.actions).to(self.device).detach()
         old_logprobs = torch.stack(self.buffer.logprobs).to(self.device).detach()
 
-        # Evaluate current log probabilities and state values
+        # Evaluate current log probabilities và state values
         logprobs, state_values, dist_entropy = self.policy.evaluate(old_states, old_actions)
 
         # Compute advantages
@@ -146,29 +139,15 @@ class PPO:
         # Clear the buffer after updating
         self.buffer.clear()
 
-        # Save last checkpoint
-        if self.last_checkpoint_path:
-            saved_path = self.save_checkpoint(self.last_checkpoint_path, is_best=False)
-            logging.info(f"Last model saved at {saved_path}")
-
-        # Save best checkpoint if current validation profit is better
-        if current_val_profit > self.best_val_profit:
-            self.best_val_profit = current_val_profit
-            if self.best_checkpoint_path:
-                saved_path = self.save_checkpoint(self.best_checkpoint_path, is_best=True)
-                logging.info(f"Best model updated and saved at {saved_path}")
-
-    def save_checkpoint(self, filepath, is_best=False):
+    def save_checkpoint(self, filepath):
         if filepath:
             checkpoint = {
                 'state_dict': self.policy.state_dict(),
                 'optimizer': self.optimizer.state_dict(),
+                'best_val_profit': self.best_val_profit
             }
             torch.save(checkpoint, filepath)
-            if is_best:
-                logging.info(f"Best checkpoint saved at {filepath}")
-            else:
-                logging.info(f"Last checkpoint saved at {filepath}")
+            logging.info(f"Checkpoint saved at {filepath}")
             return filepath  # Trả về đường dẫn đã lưu
         return None
 
@@ -177,6 +156,7 @@ class PPO:
             checkpoint = torch.load(checkpoint_path, map_location=self.device)
             self.policy.load_state_dict(checkpoint['state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer'])
+            self.best_val_profit = checkpoint.get('best_val_profit', -float('inf'))
             logging.info(f"Checkpoint loaded from {checkpoint_path}")
         else:
             logging.error(f"Checkpoint file {checkpoint_path} does not exist.")

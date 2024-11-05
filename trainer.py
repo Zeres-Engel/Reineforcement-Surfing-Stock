@@ -4,13 +4,17 @@ import os
 import logging
 import torch
 import numpy as np
-from tqdm import tqdm, trange
+from tqdm import tqdm
 from itertools import combinations
 from sklearn.metrics import accuracy_score, f1_score
 from env.vn30_env import TradingEnv
 from model.ppo import PPO
 from dataloader.dataset import Dataset
-from utils.plot import plot_test_profit
+from utils.plot import (
+    plot_validation_accuracy,
+    plot_validation_f1,
+    plot_combination_metrics
+)
 from utils.logging import setup_logging
 import random
 
@@ -24,13 +28,31 @@ class Trainer:
         logging.info(f"Logs will be saved to: {self.log_path}")
         logging.info(f"Checkpoints will be saved to: {self.checkpoint_path}")
 
-        seed = config['agent']['train'].get('seed', 42)
+        seed = self.config['agent']['train'].get('seed', 42)
         torch.manual_seed(seed)
         np.random.seed(seed)
         random.seed(seed)  # Đặt seed cho random
 
         self.dataset = Dataset(config)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # Tạo thư mục last_model và best_model bên trong checkpoint_path
+        self.last_model_dir = os.path.join(self.checkpoint_path, "last_model")
+        self.best_model_dir = os.path.join(self.checkpoint_path, "best_model")
+
+        os.makedirs(self.last_model_dir, exist_ok=True)
+        os.makedirs(self.best_model_dir, exist_ok=True)
+
+        # Khởi tạo các thuộc tính để lưu trữ best model toàn cục
+        self.global_best_val_f1 = -float('inf')
+        self.global_best_val_accuracy = -float('inf')
+        self.global_best_features = None
+        self.global_best_model_checkpoint = None
+
+        # Lists để lưu trữ metrics qua từng tổ hợp
+        self.combination_f1_scores = []
+        self.combination_accuracies = []
+        self.combination_feature_sets = []
 
     def prepare_data(self, features):
         """Prepare train, val, test data for specific feature set."""
@@ -95,10 +117,6 @@ class Trainer:
             feature_combinations = all_feature_combinations
             logging.info(f"Using all {total_combinations} feature combinations")
         
-        best_val_profit = -float('inf')
-        best_features = None
-        best_model_checkpoint = None
-        
         # 3. Duyệt qua từng tổ hợp với thanh tiến trình tổng
         with tqdm(total=len(feature_combinations), desc="Total Feature Combinations", unit="combo") as combo_pbar:
             for idx, feature_set in enumerate(feature_combinations):
@@ -141,58 +159,84 @@ class Trainer:
                     gamma=self.config['agent']['train']['gamma'],
                     epochs=self.config['agent']['train']['K_epochs'],
                     batch_size=self.config['agent']['train']['batch_size'],
-                    device=self.device,
-                    checkpoint_dir=self.checkpoint_path
+                    device=self.device
                 )
                 
                 # Huấn luyện mô hình với thanh tiến trình con cho các episode
+                val_accuracies = []
+                val_f1_scores = []
+
                 with tqdm(total=self.config['agent']['train']['episodes'], desc=f"Training Combo {idx + 1}", unit="episode", leave=False) as episode_pbar:
                     for episode in range(1, self.config['agent']['train']['episodes'] + 1):
                         state = env.reset()
                         done = False
+                        cumulative_profit = 0  # Lợi nhuận tích lũy cho episode này
                         while not done:
                             action = ppo.select_action(state)
                             next_state, reward, done, _ = env.step(action)
                             ppo.buffer.rewards.append(reward)
                             ppo.buffer.is_terminals.append(done)
+                            cumulative_profit += reward
                             state = next_state
                         
-                        # Cập nhật mô hình sau mỗi episode
-                        ppo.update(current_val_profit=0)  # current_val_profit sẽ được cập nhật sau
-                
-                        if episode % 10 == 0:
+                        # Đánh giá trên tập validation sau mỗi episode
+                        val_profit, accuracy, f1 = self._validate_model(ppo, val_data, feature_set)
+                        ppo.update(current_val_profit=val_profit)
+                        val_accuracies.append(accuracy)
+                        val_f1_scores.append(f1)
+
+                        if episode % 10 == 0 or episode == self.config['agent']['train']['episodes']:
                             logging.info(f"Combination {idx + 1}, Episode {episode} completed.")
+                            logging.info(f"Val Accuracy: {accuracy:.4f}, Val F1 Score: {f1:.4f}")
                         
                         episode_pbar.update(1)
                 
-                # Đánh giá mô hình trên tập validation
-                val_profit, accuracy, f1 = self._validate_model(ppo, val_data, feature_set)
+                # Đánh giá mô hình trên tập test
+                cumulative_test_profit, test_accuracy, test_f1, sharpe_ratio, win_rate = self._evaluate_model(ppo, test_data, feature_set)
                 
-                # Cập nhật best model nếu cần
-                if val_profit > best_val_profit:
-                    best_val_profit = val_profit
-                    best_features = feature_set
-                    best_model_checkpoint = ppo.save_checkpoint(
-                        os.path.join(self.checkpoint_path, f"best_model_{idx}_{episode}.pth"),
-                        is_best=True
-                    )
-                    logging.info(f"New best model! Profit: {best_val_profit:.2f}")
-                    logging.info(f"Features: {best_features}")
-                    logging.info(f"Checkpoint Path: {best_model_checkpoint}")
+                # Lưu Last Model cho tổ hợp này (chỉ lưu checkpoint cuối cùng)
+                last_model_path = os.path.join(self.last_model_dir, f"combo_last.pth")
+                ppo.save_checkpoint(last_model_path)
+                logging.info(f"Last model for combination {idx + 1} saved at {last_model_path}")
+
+                # Thu thập metrics cho tổ hợp này
+                self.combination_f1_scores.append(max(val_f1_scores))
+                self.combination_accuracies.append(max(val_accuracies))
+                self.combination_feature_sets.append(feature_set)
                 
+                # Vẽ và lưu biểu đồ val_accuracy và val_f1score cho last_model
+                plot_validation_accuracy(val_accuracies, self.last_model_dir)
+                plot_validation_f1(val_f1_scores, self.last_model_dir)
+
+                # Kiểm tra và cập nhật Best Model toàn cục
+                current_best_f1 = max(val_f1_scores)
+                current_best_accuracy = max(val_accuracies)
+                
+                is_new_best = False
+                if current_best_f1 > self.global_best_val_f1:
+                    self.global_best_val_f1 = current_best_f1
+                    is_new_best = True
+                if current_best_accuracy > self.global_best_val_accuracy:
+                    self.global_best_val_accuracy = current_best_accuracy
+                    is_new_best = True
+                
+                if is_new_best:
+                    self.global_best_features = feature_set
+                    best_model_path = os.path.join(self.best_model_dir, "best_model.pth")
+                    ppo.save_checkpoint(best_model_path)
+                    self.global_best_model_checkpoint = best_model_path
+                    logging.info(f"New global best model! Val F1: {self.global_best_val_f1:.4f}, Val Accuracy: {self.global_best_val_accuracy:.4f}")
+                    logging.info(f"Features: {self.global_best_features}")
+                    logging.info(f"Best model checkpoint saved at: {best_model_path}")
+
+                    # Vẽ và lưu biểu đồ val_accuracy và val_f1score cho best_model
+                    plot_validation_accuracy(val_accuracies, self.best_model_dir, combination_idx=idx + 1)
+                    plot_validation_f1(val_f1_scores, self.best_model_dir, combination_idx=idx + 1)
+
                 # Cập nhật thanh tiến trình tổng
                 combo_pbar.update(1)
-        
-        # 4. Lưu thông tin best model
-        self.best_features = best_features
-        self.best_model_checkpoint = best_model_checkpoint
-        
-        # Lưu thông tin vào file
-        with open(os.path.join(self.log_path, "best_model_info.txt"), "w") as f:
-            f.write(f"Best Features: {best_features}\n")
-            f.write(f"Best Validation Profit: {best_val_profit}\n")
-            f.write(f"Checkpoint Path: {best_model_checkpoint}\n")
-
+    
+    # Các hàm _validate_model và _evaluate_model không thay đổi
     def _validate_model(self, ppo, val_data, feature_set):
         """Validate the model on the validation set."""
         env_val = TradingEnv(
@@ -231,58 +275,17 @@ class Trainer:
 
         return total_profit_val, accuracy, f1
 
-    def evaluate_best_model(self):
-        """Evaluate the best model on test set using the best features"""
-        if not hasattr(self, 'best_features') or not hasattr(self, 'best_model_checkpoint'):
-            logging.error("No best model found. Please run training first.")
-            return
-            
-        # Chuẩn bị test data với best features
-        _, _, test_data = self.prepare_data(features=self.best_features)
-        
-        # Load best model
-        features_without_close = [f for f in self.best_features if f != 'close']
-        ppo = PPO(
-            state_dim=len(features_without_close),
-            action_dim=self.config['environment']['action_dim'],
-            action_std=self.config['agent']['train']['action_std'],
-            lr_actor=self.config['agent']['train']['lr_actor'],
-            lr_critic=self.config['agent']['train']['lr_critic'],
-            gamma=self.config['agent']['train']['gamma'],
-            epochs=self.config['agent']['train']['K_epochs'],
-            batch_size=self.config['agent']['train']['batch_size'],
-            device=self.device,
-            checkpoint_dir=self.checkpoint_path
-        )
-        ppo.load_checkpoint(self.best_model_checkpoint)
-        
-        # Evaluate trên test set
-        test_env = TradingEnv(
+    def _evaluate_model(self, ppo, test_data, feature_set):
+        """Evaluate the model on the test set and return cumulative_profit, accuracy, f1, sharpe_ratio, win_rate."""
+        env_test = TradingEnv(
             data=test_data,
-            features_dim=len(features_without_close),
+            features_dim=len([f for f in feature_set if f != 'close']),
             action_dim=self.config['environment']['action_dim'],
             initial_balance=self.config['environment']['initial_balance'],
             transaction_fee=self.config['environment']['transaction_fee']
         )
-        
-        # Test loop và logging metrics với thanh tiến trình
-        test_metrics = self._evaluate_model(ppo, test_env)
-        
-        # Vẽ biểu đồ
-        plot_dir = os.path.join(self.log_path, "plots")
-        os.makedirs(plot_dir, exist_ok=True)
-        plot_test_profit(test_metrics['profits'], test_metrics['accuracy'], test_metrics['f1'], plot_dir)
-        
-        # Log kết quả
-        logging.info("\nTest Results:")
-        logging.info(f"Best Features: {self.best_features}")
-        logging.info(f"Total Profit: {test_metrics['total_profit']:.2f}")
-        logging.info(f"Sharpe Ratio: {test_metrics['sharpe_ratio']:.2f}")
-        logging.info(f"Win Rate: {test_metrics['win_rate']:.2%}")
 
-    def _evaluate_model(self, ppo, env):
-        """Evaluate the model on the test environment."""
-        state = env.reset()
+        state = env_test.reset()
         done = False
         total_profit = 0
         profits = []
@@ -292,28 +295,26 @@ class Trainer:
         all_trues = []
 
         # Sử dụng thanh tiến trình cho quá trình đánh giá
-        with tqdm(total=len(env.data), desc="Evaluating on Test Set", unit="step") as test_pbar:
+        with tqdm(total=len(env_test.data), desc="Evaluating on Test Set", unit="step") as test_pbar:
             while not done:
                 action = ppo.select_action(state, store=False)
-                next_state, reward, done, _ = env.step(action)
+                next_state, reward, done, _ = env_test.step(action)
                 total_profit += reward
-                profits.append(total_profit)
+                profits.append(reward)
                 if reward > 0:
                     wins += 1
                 total_trades += 1
                 prediction = 1 if action[0] > 0 else 0
                 all_predictions.append(prediction)
-                if env.current_step < len(env.data):
-                    true_label = 1 if env.data['close'].iloc[env.current_step] > env.data['close'].iloc[env.current_step - 1] else 0
+                if env_test.current_step < len(env_test.data):
+                    true_label = 1 if env_test.data['close'].iloc[env_test.current_step] > env_test.data['close'].iloc[env_test.current_step - 1] else 0
                     all_trues.append(true_label)
                 state = next_state
                 test_pbar.update(1)
 
-        # Tính Sharpe Ratio
+        # Tính Sharpe Ratio và Win Rate
         returns = np.array(profits)
         sharpe_ratio = np.mean(returns) / (np.std(returns) + 1e-6)
-
-        # Tính Win Rate
         win_rate = wins / total_trades if total_trades > 0 else 0
 
         # Tính Accuracy và F1 Score
@@ -325,11 +326,51 @@ class Trainer:
             accuracy = 0.0
             f1 = 0.0
 
-        return {
-            'total_profit': total_profit,
-            'profits': profits,
-            'sharpe_ratio': sharpe_ratio,
-            'win_rate': win_rate,
-            'accuracy': accuracy,
-            'f1': f1
-        }
+        # Tính lợi nhuận tích lũy
+        cumulative_profit = np.cumsum(profits).tolist()
+
+        return cumulative_profit, accuracy, f1, sharpe_ratio, win_rate
+
+    def evaluate_best_model(self):
+        """Evaluate the best model on test set using the best features"""
+        if not self.global_best_features or not self.global_best_model_checkpoint:
+            logging.error("No best model found. Please run training first.")
+            return
+            
+        # Chuẩn bị test data với best features
+        _, _, test_data = self.prepare_data(features=self.global_best_features)
+        
+        # Load best model
+        features_without_close = [f for f in self.global_best_features if f != 'close']
+        ppo = PPO(
+            state_dim=len(features_without_close),
+            action_dim=self.config['environment']['action_dim'],
+            action_std=self.config['agent']['train']['action_std'],
+            lr_actor=self.config['agent']['train']['lr_actor'],
+            lr_critic=self.config['agent']['train']['lr_critic'],
+            gamma=self.config['agent']['train']['gamma'],
+            epochs=self.config['agent']['train']['K_epochs'],
+            batch_size=self.config['agent']['train']['batch_size'],
+            device=self.device
+        )
+        ppo.load_checkpoint(self.global_best_model_checkpoint)
+        
+        # Đánh giá trên test set
+        cumulative_test_profit, test_accuracy, test_f1, sharpe_ratio, win_rate = self._evaluate_model(ppo, test_data, self.global_best_features)
+        
+        # Log kết quả
+        logging.info("\nTest Results:")
+        logging.info(f"Best Features: {self.global_best_features}")
+        logging.info(f"Total Profit: {cumulative_test_profit[-1]:.2f}")  # Lợi nhuận cuối cùng
+        logging.info(f"Sharpe Ratio: {sharpe_ratio:.2f}")
+        logging.info(f"Win Rate: {win_rate:.2%}")
+        logging.info(f"Test Accuracy: {test_accuracy:.4f}")
+        logging.info(f"Test F1 Score: {test_f1:.4f}")
+        
+        # Tạo và lưu các biểu đồ F1-score và Accuracy qua từng tổ hợp
+        plot_combination_metrics(
+            self.combination_f1_scores,
+            self.combination_accuracies,
+            self.combination_feature_sets,
+            self.checkpoint_path
+        )

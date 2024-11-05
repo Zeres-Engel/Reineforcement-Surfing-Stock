@@ -107,16 +107,12 @@ class Dataset(Preprocessing):
 
     def get_all_augmented_features(self, start_date, end_date):
         """Get all features after augmentation"""
-        # Lấy dữ liệu gốc
         filtered_data = self._filter_by_date(start_date, end_date)
         
-        # Augment features
         augmented_data = self.augment_features(filtered_data, strategy='advanced')
         
-        # Loại bỏ cột time và các cột không phải số
         feature_columns = augmented_data.select_dtypes(include=['float64', 'int64']).columns
         
-        # Log số cột trước và sau khi augment
         original_columns = len(filtered_data.columns)
         augmented_columns = len(augmented_data.columns)
         logging.info(f"Original columns: {original_columns}, After augment columns: {augmented_columns}")

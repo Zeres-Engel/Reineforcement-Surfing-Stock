@@ -27,7 +27,7 @@ environment:
 
 agent:
   train:
-    episodes: 500
+    episodes: 2
     critic_coeff: 0.5
     entropy_coeff: 0.01
     eps_clip: 0.2
@@ -41,7 +41,7 @@ agent:
     min_action_std: 0.1
     action_std_decay_freq: 30
     seed: 42
-    max_combinations: 1
+    max_combinations: 2
   save:
     loggers: "./logs"
     checkpoints: "checkpoints"

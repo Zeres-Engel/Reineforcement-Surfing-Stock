@@ -2,44 +2,69 @@
 
 import matplotlib.pyplot as plt
 import os
+import logging
 
-def plot_train_val_profits(train_profits, val_profits, plot_dir):
+def plot_validation_accuracy(val_accuracies, log_path, combination_idx='last'):
     plt.figure(figsize=(10,5))
-    plt.plot(train_profits, label='Train Profit')
-    plt.plot(val_profits, label='Validation Profit')
-    plt.xlabel('Epoch')
-    plt.ylabel('Profit')
-    plt.title('Train and Validation Profits Over Epochs')
+    episodes = range(1, len(val_accuracies) + 1)  # X bắt đầu từ 1 và là số nguyên
+    plt.plot(episodes, val_accuracies, label='Validation Accuracy', color='green')
+    plt.xlabel("Episode")
+    plt.ylabel("Accuracy")
+    plt.title("Validation Accuracy Over Episodes")
     plt.legend()
-    plt.savefig(os.path.join(plot_dir, 'train_val_profits.png'))
+    if combination_idx is not None:
+        acc_path = os.path.join(log_path, f"validation_accuracy_combo_{combination_idx}.png")
+    else:
+        acc_path = os.path.join(log_path, "validation_accuracy.png")
+    plt.savefig(acc_path)
     plt.close()
+    logging.info(f"Validation accuracy plotted at {acc_path}.")
 
-def plot_validation_accuracy(val_accuracies, plot_dir):
+def plot_validation_f1(val_f1_scores, log_path, combination_idx='last'):
     plt.figure(figsize=(10,5))
-    plt.plot(val_accuracies, label='Validation Accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.title('Validation Accuracy Over Epochs')
+    episodes = range(1, len(val_f1_scores) + 1)  # X bắt đầu từ 1 và là số nguyên
+    plt.plot(episodes, val_f1_scores, label='Validation F1-Score', color='red')
+    plt.xlabel("Episode")
+    plt.ylabel("F1-Score")
+    plt.title("Validation F1-Score Over Episodes")
     plt.legend()
-    plt.savefig(os.path.join(plot_dir, 'validation_accuracy.png'))
+    if combination_idx is not None:
+        f1_path = os.path.join(log_path, f"validation_f1_score_combo_{combination_idx}.png")
+    else:
+        f1_path = os.path.join(log_path, "validation_f1_score.png")
+    plt.savefig(f1_path)
     plt.close()
+    logging.info(f"Validation F1-score plotted at {f1_path}.")
 
-def plot_validation_f1(val_f1_scores, plot_dir):
-    plt.figure(figsize=(10,5))
-    plt.plot(val_f1_scores, label='Validation F1 Score')
-    plt.xlabel('Epoch')
-    plt.ylabel('F1 Score')
-    plt.title('Validation F1 Score Over Epochs')
-    plt.legend()
-    plt.savefig(os.path.join(plot_dir, 'validation_f1_score.png'))
-    plt.close()
+def plot_combination_metrics(f1_scores, accuracies, feature_sets, log_path):
+    combinations = list(range(1, len(f1_scores) + 1))  # Tổ hợp thứ tự bắt đầu từ 1
 
-def plot_test_profit(profits, accuracy, f1, plot_dir):
+    # Plot F1-Score qua từng tổ hợp
     plt.figure(figsize=(10,5))
-    plt.plot(profits, label='Test Profit')
-    plt.xlabel('Step')
-    plt.ylabel('Profit')
-    plt.title(f'Test Profit - Accuracy: {accuracy:.4f}, F1 Score: {f1:.4f}')
+    plt.plot(combinations, f1_scores, marker='o', label='F1-Score', color='red')
+    best_f1 = max(f1_scores)
+    best_f1_idx = f1_scores.index(best_f1) + 1  # +1 vì index bắt đầu từ 0
+    plt.scatter(best_f1_idx, best_f1, color='blue', label=f'Best F1-Score (Combo {best_f1_idx})')
+    plt.xlabel("Feature Combination")
+    plt.ylabel("F1-Score")
+    plt.title("Validation F1-Score Across Feature Combinations")
     plt.legend()
-    plt.savefig(os.path.join(plot_dir, 'test_profit.png'))
+    f1_combinations_path = os.path.join(log_path, "combination_f1_scores.png")
+    plt.savefig(f1_combinations_path)
     plt.close()
+    logging.info(f"Combination F1-scores plotted at {f1_combinations_path}.")
+
+    # Plot Accuracy qua từng tổ hợp
+    plt.figure(figsize=(10,5))
+    plt.plot(combinations, accuracies, marker='o', label='Accuracy', color='green')
+    best_acc = max(accuracies)
+    best_acc_idx = accuracies.index(best_acc) + 1  # +1 vì index bắt đầu từ 0
+    plt.scatter(best_acc_idx, best_acc, color='blue', label=f'Best Accuracy (Combo {best_acc_idx})')
+    plt.xlabel("Feature Combination")
+    plt.ylabel("Accuracy")
+    plt.title("Validation Accuracy Across Feature Combinations")
+    plt.legend()
+    acc_combinations_path = os.path.join(log_path, "combination_accuracies.png")
+    plt.savefig(acc_combinations_path)
+    plt.close()
+    logging.info(f"Combination Accuracies plotted at {acc_combinations_path}.")
