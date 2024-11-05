@@ -33,8 +33,8 @@ class Dataset(Preprocessing):
         
         return filtered_data
 
-    def prepare_data(self, start_date, end_date, features, lookback_minutes=46):
-        """Main data preparation pipeline with lookback window for minute-level data"""
+    def prepare_data(self, start_date, end_date, features):
+        """Main data preparation pipeline"""
         try:
             filtered_data = self._filter_by_date(start_date, end_date)
             augmented_data = self.add_technical_indicators(filtered_data)
@@ -43,24 +43,16 @@ class Dataset(Preprocessing):
             numeric_columns = augmented_data.select_dtypes(include=['float64', 'int64']).columns
             augmented_data[numeric_columns] = self.scaler.fit_transform(augmented_data[numeric_columns])
             
-            # Chọn features và chuyển thành numpy array
-            if features:
-                augmented_data = augmented_data[features]
+            # Khử nhiễu và chọn features
+            augmented_data = self.denoise_data(augmented_data)
+            if features is not None:
+                augmented_data = self.get_features_data(augmented_data, features)
             
-            sequences = []
-            targets = []
-            
-            for i in range(len(augmented_data) - lookback_minutes):
-                sequence = augmented_data.iloc[i:i + lookback_minutes].values
-                target = augmented_data.iloc[i + lookback_minutes].values
-                sequences.append(sequence)
-                targets.append(target)
-            
-            return sequences, targets
+            return augmented_data.fillna(method='ffill').fillna(method='bfill')
             
         except Exception as e:
             logging.error(f"Error in prepare_data: {str(e)}")
-            return None, None
+            return None
 
     def get_features_data(self, data, selected_features):
         """Get data with selected features plus 'close'"""
@@ -82,12 +74,3 @@ class Dataset(Preprocessing):
         filtered_data = self._filter_by_date(start_date, end_date)
         augmented_data = self.add_technical_indicators(filtered_data)
         return list(augmented_data.select_dtypes(include=['float64', 'int64']).columns), augmented_data
-
-    def validate_time_series(self, data):
-        """Validate time series data consistency"""
-        time_diffs = pd.to_datetime(data['time']).diff()
-        expected_diff = pd.Timedelta(minutes=5)
-        
-        if not all(time_diffs.dropna() == expected_diff):
-            logging.warning("Irregular time intervals detected in data")
-            # Có thể thêm resampling hoặc interpolation ở đây
