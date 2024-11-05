@@ -12,7 +12,7 @@ class Preprocessing:
     def __init__(self):
         self.scaler = StandardScaler()
 
-    def fit_transform(self, df, features):
+    def StandardScaler_transform(self, df, features):
         """Fit the scaler on the training data and transform it."""
         df_scaled = df.copy()
         self.scaler.fit(df_scaled[features])
