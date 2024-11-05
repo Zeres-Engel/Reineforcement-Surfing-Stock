@@ -1,0 +1,31 @@
+2024-11-05 17:02:25,838 - INFO - Logs will be saved to: ./logs\FPT
+2024-11-05 17:02:25,839 - INFO - Checkpoints will be saved to: ./logs\FPT\checkpoints
+2024-11-05 17:02:26,832 - INFO - Original columns: 6, After augment columns: 14
+2024-11-05 17:02:26,832 - INFO - Total augmented features: 13
+2024-11-05 17:02:26,833 - INFO - Selecting combinations of 5 features
+2024-11-05 17:02:26,833 - INFO - Randomly selected 2 feature combinations out of 1287
+2024-11-05 17:02:26,834 - INFO - 
+Evaluating combination 1/2: ['open', 'low', 'volume', 'MA_20', 'STD_20']
+2024-11-05 17:02:26,835 - INFO - Number of augmented features: 13
+2024-11-05 17:02:26,910 - INFO - Input columns: 5, After augment columns: 6
+2024-11-05 17:02:58,493 - INFO - Combination ['open', 'low', 'volume', 'MA_20', 'STD_20']: Validation Accuracy: 0.4903, F1 Score: 0.5298
+2024-11-05 17:03:29,252 - INFO - Combination ['open', 'low', 'volume', 'MA_20', 'STD_20']: Validation Accuracy: 0.4932, F1 Score: 0.5323
+2024-11-05 17:03:29,299 - INFO - Combination 1, Episode 2 completed.
+2024-11-05 17:03:29,299 - INFO - Val Accuracy: 0.4932, Val F1 Score: 0.5323
+2024-11-05 17:03:39,602 - INFO - Cumulative profit plot saved at ./logs\FPT\checkpoints\last_model\last_model_profit_combo_last.png
+2024-11-05 17:03:39,607 - INFO - Checkpoint saved at ./logs\FPT\checkpoints\last_model\combo_last.pth
+2024-11-05 17:03:39,608 - INFO - Last model for combination 1 saved at ./logs\FPT\checkpoints\last_model\combo_last.pth
+2024-11-05 17:03:39,784 - INFO - Validation accuracy plotted at ./logs\FPT\checkpoints\last_model\validation_accuracy_combo_last.png.
+2024-11-05 17:03:39,953 - INFO - Validation F1-score plotted at ./logs\FPT\checkpoints\last_model\validation_f1_score_combo_last.png.
+2024-11-05 17:03:39,958 - INFO - Checkpoint saved at ./logs\FPT\checkpoints\best_model\best_model.pth
+2024-11-05 17:03:40,151 - INFO - Cumulative profit plot saved at ./logs\FPT\checkpoints\best_model\best_model_profit_combo_1.png
+2024-11-05 17:03:40,151 - INFO - New global best model! Val F1: 0.5323, Val Accuracy: 0.4932
+2024-11-05 17:03:40,152 - INFO - Features: ['open', 'low', 'volume', 'MA_20', 'STD_20']
+2024-11-05 17:03:40,152 - INFO - Best model checkpoint saved at: ./logs\FPT\checkpoints\best_model\best_model.pth
+2024-11-05 17:03:40,334 - INFO - Validation accuracy plotted at ./logs\FPT\checkpoints\best_model\validation_accuracy_combo_last.png.
+2024-11-05 17:03:40,506 - INFO - Validation F1-score plotted at ./logs\FPT\checkpoints\best_model\validation_f1_score_combo_last.png.
+2024-11-05 17:03:40,507 - INFO - 
+Evaluating combination 2/2: ['open', 'high', 'close', 'volume', 'MA_20']
+2024-11-05 17:03:40,507 - INFO - Number of augmented features: 13
+2024-11-05 17:03:40,695 - INFO - Input columns: 5, After augment columns: 5
+2024-11-05 17:04:10,922 - INFO - Combination ['open', 'high', 'close', 'volume', 'MA_20']: Validation Accuracy: 0.4883, F1 Score: 0.5276

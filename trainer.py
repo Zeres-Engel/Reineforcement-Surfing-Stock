@@ -13,7 +13,8 @@ from dataloader.dataset import Dataset
 from utils.plot import (
     plot_validation_accuracy,
     plot_validation_f1,
-    plot_combination_metrics
+    plot_combination_metrics,
+    plot_cumulative_profit
 )
 from utils.logging import setup_logging
 import random
@@ -194,6 +195,14 @@ class Trainer:
                 # Đánh giá mô hình trên tập test
                 cumulative_test_profit, test_accuracy, test_f1, sharpe_ratio, win_rate = self._evaluate_model(ppo, test_data, feature_set)
                 
+                # Thêm vẽ biểu đồ cho last model
+                plot_cumulative_profit(
+                    cumulative_test_profit,
+                    self.last_model_dir,
+                    model_type='last',
+                    combination_idx='last'
+                )
+
                 # Lưu Last Model cho tổ hợp này (chỉ lưu checkpoint cuối cùng)
                 last_model_path = os.path.join(self.last_model_dir, f"combo_last.pth")
                 ppo.save_checkpoint(last_model_path)
@@ -225,13 +234,22 @@ class Trainer:
                     best_model_path = os.path.join(self.best_model_dir, "best_model.pth")
                     ppo.save_checkpoint(best_model_path)
                     self.global_best_model_checkpoint = best_model_path
+                    
+                    # Thêm vẽ biểu đồ cho best model
+                    plot_cumulative_profit(
+                        cumulative_test_profit,
+                        self.best_model_dir,
+                        model_type='best',
+                        combination_idx=idx + 1
+                    )
+                    
                     logging.info(f"New global best model! Val F1: {self.global_best_val_f1:.4f}, Val Accuracy: {self.global_best_val_accuracy:.4f}")
                     logging.info(f"Features: {self.global_best_features}")
                     logging.info(f"Best model checkpoint saved at: {best_model_path}")
 
                     # Vẽ và lưu biểu đồ val_accuracy và val_f1score cho best_model
-                    plot_validation_accuracy(val_accuracies, self.best_model_dir, combination_idx=idx + 1)
-                    plot_validation_f1(val_f1_scores, self.best_model_dir, combination_idx=idx + 1)
+                    plot_validation_accuracy(val_accuracies, self.best_model_dir)
+                    plot_validation_f1(val_f1_scores, self.best_model_dir)
 
                 # Cập nhật thanh tiến trình tổng
                 combo_pbar.update(1)
@@ -358,10 +376,17 @@ class Trainer:
         # Đánh giá trên test set
         cumulative_test_profit, test_accuracy, test_f1, sharpe_ratio, win_rate = self._evaluate_model(ppo, test_data, self.global_best_features)
         
+        # Vẽ biểu đồ profit cuối cùng cho best model
+        plot_cumulative_profit(
+            cumulative_test_profit,
+            self.checkpoint_path,
+            model_type='final_best'
+        )
+        
         # Log kết quả
         logging.info("\nTest Results:")
         logging.info(f"Best Features: {self.global_best_features}")
-        logging.info(f"Total Profit: {cumulative_test_profit[-1]:.2f}")  # Lợi nhuận cuối cùng
+        logging.info(f"Total Profit: {cumulative_test_profit[-1]:.2f}")
         logging.info(f"Sharpe Ratio: {sharpe_ratio:.2f}")
         logging.info(f"Win Rate: {win_rate:.2%}")
         logging.info(f"Test Accuracy: {test_accuracy:.4f}")

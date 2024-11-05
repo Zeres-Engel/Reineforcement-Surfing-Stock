@@ -68,3 +68,28 @@ def plot_combination_metrics(f1_scores, accuracies, feature_sets, log_path):
     plt.savefig(acc_combinations_path)
     plt.close()
     logging.info(f"Combination Accuracies plotted at {acc_combinations_path}.")
+
+def plot_cumulative_profit(profits, log_path, model_type='best', combination_idx=None):
+    plt.figure(figsize=(12,6))
+    steps = range(1, len(profits) + 1)
+    plt.plot(steps, profits, label=f'Cumulative Profit', color='blue')
+    plt.axhline(y=0, color='r', linestyle='--', alpha=0.3)
+    
+    plt.xlabel("Trading Steps")
+    plt.ylabel("Cumulative Profit")
+    
+    if combination_idx is not None:
+        title = f"{model_type.capitalize()} Model Cumulative Profit - Combination {combination_idx}"
+        filename = f"{model_type}_model_profit_combo_{combination_idx}.png"
+    else:
+        title = f"{model_type.capitalize()} Model Cumulative Profit"
+        filename = f"{model_type}_model_profit.png"
+    
+    plt.title(title)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    
+    save_path = os.path.join(log_path, filename)
+    plt.savefig(save_path)
+    plt.close()
+    logging.info(f"Cumulative profit plot saved at {save_path}")

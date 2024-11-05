@@ -150,6 +150,7 @@ class Preprocessing:
         # Remove rows with NaN values
         stock_df.dropna(axis=0, how="any", inplace=True)
         return stock_df
+    
     def lagged_features(self, df, lag_features, num_lags=3):
         # Có thể cân nhắc, thêm vào faeture giá của trước đó vài ngày, thay vì 1 ngày
         df_with_lags = df.copy() 
