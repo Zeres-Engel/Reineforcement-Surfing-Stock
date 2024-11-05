@@ -79,3 +79,142 @@ Test Results:
 2024-11-06 02:28:49,030 - INFO - Test F1 Score: 0.5677
 2024-11-06 02:28:49,233 - INFO - Combination F1-scores plotted at ./logs\FPT\checkpoints\combination_f1_scores.png.
 2024-11-06 02:28:49,442 - INFO - Combination Accuracies plotted at ./logs\FPT\checkpoints\combination_accuracies.png.
+2024-11-06 02:37:50,650 - INFO - Logs will be saved to: ./logs\FPT
+2024-11-06 02:37:50,650 - INFO - Checkpoints will be saved to: ./logs\FPT\checkpoints
+2024-11-06 02:37:50,789 - WARNING - Error calculating indicators for window 419: 'CCI_419'
+2024-11-06 02:37:50,842 - WARNING - Error calculating indicators for window 1007: 'CCI_1007'
+2024-11-06 02:37:50,896 - WARNING - Error calculating indicators for window 839: 'CCI_839'
+2024-11-06 02:37:50,958 - WARNING - Error calculating indicators for window 503: 'CCI_503'
+2024-11-06 02:37:51,020 - WARNING - Error calculating indicators for window 629: 'CCI_629'
+2024-11-06 02:37:51,082 - WARNING - Error calculating indicators for window 559: 'CCI_559'
+2024-11-06 02:37:51,127 - WARNING - Error calculating indicators for window 2516: 'CCI_2516'
+2024-11-06 02:37:51,183 - WARNING - Error calculating indicators for window 1258: 'CCI_1258'
+2024-11-06 02:37:51,229 - WARNING - Error calculating indicators for window 1678: 'CCI_1678'
+2024-11-06 02:37:51,234 - INFO - Total augmented features: 34
+2024-11-06 02:37:51,234 - INFO - Selecting combinations of 5 features
+2024-11-06 02:37:51,258 - INFO - Randomly selected 2 feature combinations out of 278256
+2024-11-06 02:37:51,260 - INFO - 
+Evaluating combination 1/2: ['high', 'O-C', 'DMN_839', 'ADX_503', 'ADX_2516']
+2024-11-06 02:37:51,260 - INFO - Number of augmented features: 34
+2024-11-06 02:37:51,323 - WARNING - Error calculating indicators for window 419: 'CCI_419'
+2024-11-06 02:37:51,377 - WARNING - Error calculating indicators for window 1007: 'CCI_1007'
+2024-11-06 02:37:51,433 - WARNING - Error calculating indicators for window 839: 'CCI_839'
+2024-11-06 02:37:51,488 - WARNING - Error calculating indicators for window 503: 'CCI_503'
+2024-11-06 02:37:51,544 - WARNING - Error calculating indicators for window 629: 'CCI_629'
+2024-11-06 02:37:51,600 - WARNING - Error calculating indicators for window 559: 'CCI_559'
+2024-11-06 02:37:51,640 - WARNING - Error calculating indicators for window 2516: 'CCI_2516'
+2024-11-06 02:37:51,693 - WARNING - Error calculating indicators for window 1258: 'CCI_1258'
+2024-11-06 02:37:51,749 - WARNING - Error calculating indicators for window 1678: 'CCI_1678'
+2024-11-06 02:37:51,868 - WARNING - Error calculating indicators for window 419: 'CCI_419'
+2024-11-06 02:37:51,958 - WARNING - Error calculating indicators for window 1007: 'CCI_1007'
+2024-11-06 02:37:52,021 - WARNING - Error calculating indicators for window 839: 'CCI_839'
+2024-11-06 02:37:52,082 - WARNING - Error calculating indicators for window 503: 'CCI_503'
+2024-11-06 02:37:52,131 - WARNING - Error calculating indicators for window 629: 'CCI_629'
+2024-11-06 02:37:52,180 - WARNING - Error calculating indicators for window 559: 'CCI_559'
+2024-11-06 02:37:52,211 - WARNING - Error calculating indicators for window 2516: 'CCI_2516'
+2024-11-06 02:37:52,256 - WARNING - Error calculating indicators for window 1258: 'CCI_1258'
+2024-11-06 02:37:52,294 - WARNING - Error calculating indicators for window 1678: 'CCI_1678'
+2024-11-06 02:37:52,385 - WARNING - Error calculating indicators for window 419: 'CCI_419'
+2024-11-06 02:37:52,418 - WARNING - Error calculating indicators for window 1007: 'CCI_1007'
+2024-11-06 02:37:52,454 - WARNING - Error calculating indicators for window 839: 'CCI_839'
+2024-11-06 02:37:52,491 - WARNING - Error calculating indicators for window 503: 'CCI_503'
+2024-11-06 02:37:52,529 - WARNING - Error calculating indicators for window 629: 'CCI_629'
+2024-11-06 02:37:52,565 - WARNING - Error calculating indicators for window 559: 'CCI_559'
+2024-11-06 02:37:52,580 - WARNING - Error calculating indicators for window 2516: 'CCI_2516'
+2024-11-06 02:37:52,613 - WARNING - Error calculating indicators for window 1258: 'CCI_1258'
+2024-11-06 02:37:52,641 - WARNING - Error calculating indicators for window 1678: 'CCI_1678'
+2024-11-06 02:37:52,689 - INFO - Input columns: 5, After augment columns: 6
+2024-11-06 02:38:47,878 - INFO - Logs will be saved to: ./logs\FPT
+2024-11-06 02:38:47,878 - INFO - Checkpoints will be saved to: ./logs\FPT\checkpoints
+2024-11-06 02:38:48,067 - INFO - Total augmented features: 70
+2024-11-06 02:38:48,068 - INFO - Selecting combinations of 5 features
+2024-11-06 02:38:49,161 - INFO - Randomly selected 2 feature combinations out of 12103014
+2024-11-06 02:38:49,163 - INFO - 
+Evaluating combination 1/2: ['BB_upper_839', 'EMA_2516', 'RSI_2516', 'STOCH_1258', 'MACD_1678']
+2024-11-06 02:38:49,163 - INFO - Number of augmented features: 70
+2024-11-06 02:38:49,790 - INFO - Input columns: 5, After augment columns: 6
+2024-11-06 02:40:28,192 - INFO - Logs will be saved to: ./logs\FPT
+2024-11-06 02:40:28,193 - INFO - Checkpoints will be saved to: ./logs\FPT\checkpoints
+2024-11-06 02:40:28,640 - INFO - Total augmented features: 107
+2024-11-06 02:40:28,640 - INFO - Selecting combinations of 5 features
+2024-11-06 02:40:47,087 - INFO - Randomly selected 2 feature combinations out of 106308566
+2024-11-06 02:40:47,705 - INFO - 
+Evaluating combination 1/2: ['ADX_839', 'ADX_503', 'RSI_559', 'DMN_2516', 'MACD_1258']
+2024-11-06 02:40:47,712 - INFO - Number of augmented features: 107
+2024-11-06 02:40:51,056 - INFO - Input columns: 5, After augment columns: 6
+2024-11-06 02:42:33,946 - INFO - Logs will be saved to: ./logs\FPT
+2024-11-06 02:42:33,946 - INFO - Checkpoints will be saved to: ./logs\FPT\checkpoints
+2024-11-06 02:42:34,283 - INFO - Total augmented features: 107
+2024-11-06 02:42:34,284 - INFO - Selecting combinations of 5 features
+2024-11-06 02:42:46,306 - INFO - Randomly selected 2 feature combinations out of 106308566
+2024-11-06 02:42:46,495 - INFO - 
+Evaluating combination 1/2: ['ADX_839', 'ADX_503', 'RSI_559', 'DMN_2516', 'MACD_1258']
+2024-11-06 02:42:46,495 - INFO - Number of augmented features: 107
+2024-11-06 02:42:47,786 - INFO - Input columns: 5, After augment columns: 6
+2024-11-06 02:43:40,400 - INFO - Combination ['ADX_839', 'ADX_503', 'RSI_559', 'DMN_2516', 'MACD_1258']: Validation Accuracy: 0.4997, F1 Score: 0.5526
+2024-11-06 02:43:57,628 - INFO - Logs will be saved to: ./logs\FPT
+2024-11-06 02:43:57,629 - INFO - Checkpoints will be saved to: ./logs\FPT\checkpoints
+2024-11-06 02:43:57,963 - INFO - Total augmented features: 107
+2024-11-06 02:43:57,963 - INFO - Selecting combinations of 5 features
+2024-11-06 02:44:08,928 - INFO - Randomly selected 2 feature combinations out of 106308566
+2024-11-06 02:44:09,194 - INFO - 
+Evaluating combination 1/2: ['ADX_839', 'ADX_503', 'RSI_559', 'DMN_2516', 'MACD_1258']
+2024-11-06 02:44:09,194 - INFO - Number of augmented features: 107
+2024-11-06 02:44:11,729 - INFO - Input columns: 5, After augment columns: 6
+2024-11-06 02:47:33,641 - INFO - Logs will be saved to: ./logs\FPT
+2024-11-06 02:47:33,642 - INFO - Checkpoints will be saved to: ./logs\FPT\checkpoints
+2024-11-06 02:47:33,881 - INFO - Total augmented features: 70
+2024-11-06 02:47:33,881 - INFO - Selecting combinations of 5 features
+2024-11-06 02:47:34,905 - INFO - Randomly selected 2 feature combinations out of 12103014
+2024-11-06 02:47:34,907 - INFO - 
+Evaluating combination 1/2: ['BB_upper_839', 'EMA_2516', 'RSI_2516', 'STOCH_1258', 'MACD_1678']
+2024-11-06 02:47:34,908 - INFO - Number of augmented features: 70
+2024-11-06 02:47:35,490 - INFO - Input columns: 5, After augment columns: 6
+2024-11-06 02:48:16,507 - INFO - Combination ['BB_upper_839', 'EMA_2516', 'RSI_2516', 'STOCH_1258', 'MACD_1678']: Validation Accuracy: 0.4979, F1 Score: 0.5508
+2024-11-06 02:48:57,325 - INFO - Combination ['BB_upper_839', 'EMA_2516', 'RSI_2516', 'STOCH_1258', 'MACD_1678']: Validation Accuracy: 0.4974, F1 Score: 0.5505
+2024-11-06 02:48:57,382 - INFO - Combination 1, Episode 2 completed.
+2024-11-06 02:48:57,382 - INFO - Val Accuracy: 0.4974, Val F1 Score: 0.5505
+2024-11-06 02:49:11,955 - INFO - Cumulative profit plot saved at ./logs\FPT\checkpoints\last_model\last_model_profit_combo_last.png
+2024-11-06 02:49:11,968 - INFO - Checkpoint saved at ./logs\FPT\checkpoints\last_model\combo_last.pth
+2024-11-06 02:49:11,968 - INFO - Last model for combination 1 saved at ./logs\FPT\checkpoints\last_model\combo_last.pth
+2024-11-06 02:49:12,180 - INFO - Validation accuracy plotted at ./logs\FPT\checkpoints\last_model\validation_accuracy_combo_last.png.
+2024-11-06 02:49:12,384 - INFO - Validation F1-score plotted at ./logs\FPT\checkpoints\last_model\validation_f1_score_combo_last.png.
+2024-11-06 02:49:12,392 - INFO - Checkpoint saved at ./logs\FPT\checkpoints\best_model\best_model.pth
+2024-11-06 02:49:12,631 - INFO - Cumulative profit plot saved at ./logs\FPT\checkpoints\best_model\best_model_profit_combo_1.png
+2024-11-06 02:49:12,631 - INFO - New global best model! Val F1: 0.5508, Val Accuracy: 0.4979
+2024-11-06 02:49:12,632 - INFO - Features: ['BB_upper_839', 'EMA_2516', 'RSI_2516', 'STOCH_1258', 'MACD_1678']
+2024-11-06 02:49:12,632 - INFO - Best model checkpoint saved at: ./logs\FPT\checkpoints\best_model\best_model.pth
+2024-11-06 02:49:12,853 - INFO - Validation accuracy plotted at ./logs\FPT\checkpoints\best_model\validation_accuracy_combo_best.png.
+2024-11-06 02:49:13,093 - INFO - Validation F1-score plotted at ./logs\FPT\checkpoints\best_model\validation_f1_score_combo_best.png.
+2024-11-06 02:49:13,094 - INFO - 
+Evaluating combination 2/2: ['low', 'SMA_419', 'MACD_1007', 'STOCH_2516', 'BB_upper_1678']
+2024-11-06 02:49:13,094 - INFO - Number of augmented features: 70
+2024-11-06 02:49:13,705 - INFO - Input columns: 5, After augment columns: 6
+2024-11-06 02:49:53,679 - INFO - Combination ['low', 'SMA_419', 'MACD_1007', 'STOCH_2516', 'BB_upper_1678']: Validation Accuracy: 0.5224, F1 Score: 0.5734
+2024-11-06 02:50:37,840 - INFO - Combination ['low', 'SMA_419', 'MACD_1007', 'STOCH_2516', 'BB_upper_1678']: Validation Accuracy: 0.5151, F1 Score: 0.5668
+2024-11-06 02:50:37,904 - INFO - Combination 2, Episode 2 completed.
+2024-11-06 02:50:37,904 - INFO - Val Accuracy: 0.5151, Val F1 Score: 0.5668
+2024-11-06 02:50:53,307 - INFO - Cumulative profit plot saved at ./logs\FPT\checkpoints\last_model\last_model_profit_combo_last.png
+2024-11-06 02:50:53,314 - INFO - Checkpoint saved at ./logs\FPT\checkpoints\last_model\combo_last.pth
+2024-11-06 02:50:53,314 - INFO - Last model for combination 2 saved at ./logs\FPT\checkpoints\last_model\combo_last.pth
+2024-11-06 02:50:53,556 - INFO - Validation accuracy plotted at ./logs\FPT\checkpoints\last_model\validation_accuracy_combo_last.png.
+2024-11-06 02:50:53,785 - INFO - Validation F1-score plotted at ./logs\FPT\checkpoints\last_model\validation_f1_score_combo_last.png.
+2024-11-06 02:50:53,792 - INFO - Checkpoint saved at ./logs\FPT\checkpoints\best_model\best_model.pth
+2024-11-06 02:50:54,095 - INFO - Cumulative profit plot saved at ./logs\FPT\checkpoints\best_model\best_model_profit_combo_2.png
+2024-11-06 02:50:54,096 - INFO - New global best model! Val F1: 0.5734, Val Accuracy: 0.5224
+2024-11-06 02:50:54,096 - INFO - Features: ['low', 'SMA_419', 'MACD_1007', 'STOCH_2516', 'BB_upper_1678']
+2024-11-06 02:50:54,096 - INFO - Best model checkpoint saved at: ./logs\FPT\checkpoints\best_model\best_model.pth
+2024-11-06 02:50:54,334 - INFO - Validation accuracy plotted at ./logs\FPT\checkpoints\best_model\validation_accuracy_combo_best.png.
+2024-11-06 02:50:54,552 - INFO - Validation F1-score plotted at ./logs\FPT\checkpoints\best_model\validation_f1_score_combo_best.png.
+2024-11-06 02:50:55,527 - INFO - Checkpoint loaded from ./logs\FPT\checkpoints\best_model\best_model.pth
+2024-11-06 02:51:10,613 - INFO - Cumulative profit plot saved at ./logs\FPT\checkpoints\final_best_model_profit.png
+2024-11-06 02:51:10,614 - INFO - 
+Test Results:
+2024-11-06 02:51:10,614 - INFO - Best Features: ['low', 'SMA_419', 'MACD_1007', 'STOCH_2516', 'BB_upper_1678']
+2024-11-06 02:51:10,614 - INFO - Total Profit: 4.30
+2024-11-06 02:51:10,614 - INFO - Sharpe Ratio: 0.04
+2024-11-06 02:51:10,614 - INFO - Win Rate: 14.42%
+2024-11-06 02:51:10,615 - INFO - Test Accuracy: 0.5052
+2024-11-06 02:51:10,615 - INFO - Test F1 Score: 0.5677
+2024-11-06 02:51:10,849 - INFO - Combination F1-scores plotted at ./logs\FPT\checkpoints\combination_f1_scores.png.
+2024-11-06 02:51:11,076 - INFO - Combination Accuracies plotted at ./logs\FPT\checkpoints\combination_accuracies.png.

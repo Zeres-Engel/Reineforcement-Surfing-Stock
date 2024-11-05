@@ -21,9 +21,6 @@ class Preprocessing:
         # 2. Technical Indicators cho mỗi window
         for window in self.windows:
             try:
-                # ADX - Average Directional Index
-                
-                # C
                 # SMA - Simple Moving Average
                 df_indicators[f'SMA_{window}'] = ta.sma(df_indicators['close'], length=window)
                 
