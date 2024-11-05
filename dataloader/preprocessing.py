@@ -41,7 +41,7 @@ class Preprocessing:
         df_indicators = df.copy()
         df_indicators['H-L'] = df_indicators['high'] - df_indicators['low']
         df_indicators['O-C'] = df_indicators['open'] - df_indicators['close']
-        
+
         ma_windows = [5, 10, 20]
         for window in ma_windows:
             df_indicators[f'MA_{window}'] = df_indicators['close'].rolling(window=window, min_periods=1).mean()
