@@ -20,11 +20,11 @@ class RolloutBuffer:
         self.is_terminals = []
 
 class PPO:
-    def __init__(self, state_dim, action_dim, action_std, lr_actor, lr_critic, gamma, epochs, batch_size, device="cpu"):
+    def __init__(self, state_dim, action_dim, action_std, lr_actor, lr_critic, gamma, epochs, batch_size, device="cuda"):
         self.device = device
         self.buffer = RolloutBuffer()
         self.policy = ActorCritic(state_dim, action_dim, action_std, device).to(self.device)
-        self.optimizer = torch.optim.Adam([
+        self.optimizer = torch.optim.AdamW([
             {'params': self.policy.actor.parameters(), 'lr': lr_actor},
             {'params': self.policy.critic.parameters(), 'lr': lr_critic}
         ])

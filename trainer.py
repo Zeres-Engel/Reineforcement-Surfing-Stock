@@ -229,7 +229,7 @@ class Trainer:
                         cumulative_test_profit,
                         self.best_model_dir,
                         model_type='best',
-                        combination_idx=idx + 1
+                        combination_idx='best'
                     )
                     
                     logging.info(f"New global best model! Val F1: {self.global_best_val_f1:.4f}, Val Accuracy: {self.global_best_val_accuracy:.4f}")

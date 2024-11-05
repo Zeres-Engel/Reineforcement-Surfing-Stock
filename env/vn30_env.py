@@ -9,9 +9,8 @@ class TradingEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self, data, features_dim, action_dim=1, initial_balance=10000, transaction_fee=0.001):
-        super(TradingEnv, self).__init__()
-
-        self.data = data
+        super().__init__()
+        self.data = data.astype(np.float32)
         self.features_dim = features_dim - 1
         self.action_dim = action_dim
         self.initial_balance = initial_balance
@@ -21,10 +20,10 @@ class TradingEnv(gym.Env):
             raise ValueError("Data must contain 'close' column")
 
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(features_dim,)
+            low=-np.inf, high=np.inf, shape=(features_dim,), dtype=np.float32
         )
         self.action_space = spaces.Box(
-            low=-1, high=1, shape=(action_dim,)
+            low=-1, high=1, shape=(action_dim,), dtype=np.float32
         )
 
         self.reset()
