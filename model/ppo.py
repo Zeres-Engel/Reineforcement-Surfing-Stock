@@ -1,26 +1,10 @@
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
-from torch.distributions import MultivariateNormal
-import yaml
-from tqdm import tqdm
 import os
-import argparse
-import matplotlib.pyplot as plt
-from sklearn.metrics import accuracy_score, f1_score
 import logging
-import sys
-import codecs
-from sklearn.preprocessing import StandardScaler
-import glob
-import joblib
-from datetime import datetime
 from model.actor_critic import ActorCritic
 
-# ===========================
-# 6. PPO Components
-# ===========================
 class RolloutBuffer:
     def __init__(self):
         self.clear()
@@ -46,7 +30,7 @@ class PPO:
         self.epochs = epochs
         self.batch_size = batch_size
         self.checkpoint_dir = checkpoint_dir
-        self.best_val_profit = -np.inf  # Initialize best validation profit
+        self.best_val_profit = -np.inf
         self.best_checkpoint_path = os.path.join(self.checkpoint_dir, "best_model.pth")
         self.last_checkpoint_path = os.path.join(self.checkpoint_dir, "last_model.pth")
     
@@ -65,7 +49,6 @@ class PPO:
             logging.warning("Rollout buffer is empty, skipping update.")
             return
 
-        # Calculate discounted rewards
         rewards = []
         discounted_reward = 0
         for reward, is_terminal in zip(reversed(self.buffer.rewards), reversed(self.buffer.is_terminals)):
@@ -74,37 +57,30 @@ class PPO:
             discounted_reward = reward + (self.gamma * discounted_reward)
             rewards.insert(0, discounted_reward)
         
-        # Convert list to tensor
         rewards = torch.tensor(rewards, dtype=torch.float32).to(self.device)
         rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
 
-        # Convert list to tensor
         old_states = torch.stack(self.buffer.states).to(self.device).detach()
         old_actions = torch.stack(self.buffer.actions).to(self.device).detach()
         old_logprobs = torch.stack(self.buffer.logprobs).to(self.device).detach()
 
-        # Evaluate actions
         logprobs, state_values, dist_entropy = self.policy.evaluate(old_states, old_actions)
-        
-        # Calculate advantages
+
         advantages = rewards - state_values.squeeze().detach()
-        
-        # PPO loss
+
         ratios = torch.exp(logprobs - old_logprobs)
         surr1 = ratios * advantages
         surr2 = torch.clamp(ratios, 1 - 0.2, 1 + 0.2) * advantages
         loss = -torch.min(surr1, surr2).mean() + 0.5 * nn.MSELoss()(state_values.squeeze(), rewards) - 0.01 * dist_entropy.mean()
-        
-        # Backpropagation
+
         self.optimizer.zero_grad()
         loss.backward()
         nn.utils.clip_grad_norm_(self.policy.parameters(), max_norm=0.5)  # Gradient Clipping
         self.optimizer.step()
         
-        # Clear buffer
+
         self.buffer.clear()
 
-        # Save last model
         if self.checkpoint_dir:
             self.save_checkpoint(self.last_checkpoint_path, is_best=False)
             logging.info(f"Last model saved at {self.last_checkpoint_path}")

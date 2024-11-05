@@ -16,10 +16,10 @@ data:
   ticket: "FPT"
 
 environment:
-  features_dim: 5
+  features_dim: 13
   action_dim: 1
-  initial_balance: 10000
-  transaction_fee: 0.001
+  initial_balance: 1000000
+  transaction_fee: 0.0015
 
 agent:
   train:
