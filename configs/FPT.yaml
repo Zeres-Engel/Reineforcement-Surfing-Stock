@@ -1,12 +1,12 @@
-# FPT.yaml
+# configs/FPT.yaml
 data:
   data_path: "./data/FPT.csv"
   features:
     - open
     - high
     - low
-    - close
     - volume
+    - close
   start_train_date: "2023-11-09"
   end_train_date: "2024-03-31"
   start_validation_date: "2024-04-01"
@@ -14,6 +14,10 @@ data:
   start_test_date: "2024-08-01"
   end_test_date: "2024-11-01"
   ticket: "FPT"
+  feature_augmentation:
+    enabled: true
+    strategies:
+      - technical_indicators
 
 environment:
   features_dim: 5
@@ -37,9 +41,7 @@ agent:
     min_action_std: 0.1
     action_std_decay_freq: 30
     seed: 42
-
+    max_combinations: 1
   save:
     loggers: "./logs"
     checkpoints: "checkpoints"
-
-  mode: "train"

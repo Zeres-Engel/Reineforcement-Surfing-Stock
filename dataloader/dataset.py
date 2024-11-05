@@ -2,7 +2,7 @@
 import pandas as pd
 import logging
 import joblib
-from sklearn.ensemble import RandomForestClassifier
+from itertools import combinations
 from .preprocessing import Preprocessing
 
 class Dataset(Preprocessing):
@@ -13,7 +13,7 @@ class Dataset(Preprocessing):
         self._load_raw_data()
 
     def _load_raw_data(self):
-        """Load raw data from csv file"""
+        """Load raw data from CSV file"""
         columns_to_use = ['time'] + self.config['data']['features']
         self.data = pd.read_csv(self.config['data']['data_path'], 
                                 usecols=columns_to_use, 
@@ -25,17 +25,12 @@ class Dataset(Preprocessing):
         # Process the time column
         self.data['time'] = pd.to_datetime(self.data['time'], dayfirst=True, errors='coerce')
         if self.data['time'].isnull().any():
-            logging.warning("Some time entries could not be parsed and will be dropped.")
+            logging.warning("Một số mục thời gian không thể phân tích cú pháp và sẽ bị loại bỏ.")
             self.data = self.data.dropna(subset=['time'])
 
-    def process_data(self, start_date, end_date, features):
-        """Process raw data: filter by date and normalize"""
-        # Filter data by date range
-        filtered_data = self._filter_by_date(start_date, end_date)
-        
-        # Normalize data
+    def process_data(self, filtered_data, features):
+        """Normalize selected features"""
         processed_data = self.fit_transform(filtered_data, features)
-        
         return processed_data
 
     def _filter_by_date(self, start_date, end_date):
@@ -64,44 +59,41 @@ class Dataset(Preprocessing):
             
         return augmented_data
 
-    def select_features(self, data, target_column='close', n_features=5):
-        """
-        Select the top n_features based on feature importance using RandomForest.
-        """
-        # Create target variable
-        data['target'] = (data['close'].shift(-1) > data['close']).astype(int)
-        data = data.dropna()
-        
-        X = data.drop(['time', 'close', 'target'], axis=1)
-        y = data['target']
-        
-        if X.empty:
-            raise ValueError("No features available for selection.")
-        
-        model = RandomForestClassifier(n_estimators=100, random_state=42)
-        model.fit(X, y)
-        importances = model.feature_importances_
-        feature_importances = pd.Series(importances, index=X.columns)
-        top_features = feature_importances.sort_values(ascending=False).head(n_features).index.tolist()
-        
-        logging.info(f"Selected top {n_features} features: {top_features}")
-        return top_features
+    def prepare_data(self, start_date, end_date, features, strategy='default', denoise=False):
+        """Prepare data pipeline without feature selection"""
+        try:
+            # 1. Lọc dữ liệu theo ngày
+            filtered_data = self._filter_by_date(start_date, end_date)
+            
+            # 2. Augment features
+            augmented_data = self.augment_features(filtered_data, strategy)
+            
+            # 3. Chuẩn hóa các tính năng đã chọn
+            processed_data = self.process_data(augmented_data, features)
+            
+            # 4. Denoise dữ liệu nếu cần
+            if denoise:
+                processed_data = self.denoise_data(processed_data, method='median_filter')
+            
+            return processed_data
+        except ValueError as e:
+            logging.error(e)
+            return None
 
-    def prepare_data(self, start_date, end_date, features, strategy='default', denoise=False, n_features=5):
-        """Complete pipeline to prepare data"""
-        processed_data = self.process_data(start_date, end_date, features)
+    def get_features_data(self, data, selected_features):
+        """Get data with selected features plus 'close'"""
+        if 'close' not in data.columns:
+            raise KeyError("'close' column is missing in the data.")
         
-        augmented_data = self.augment_features(processed_data, strategy)
+        selected_features = list(selected_features)
+        if 'close' not in selected_features:
+            selected_features.append('close')  # Retain 'close' for profit calculation
         
-        if denoise:
-            augmented_data = self.denoise_data(augmented_data, method='median_filter')
+        if not set(selected_features).issubset(data.columns):
+            missing = set(selected_features) - set(data.columns)
+            raise KeyError(f"The following selected features are missing in the data: {missing}")
         
-        # Feature Selection
-        selected_features = self.select_features(augmented_data, n_features=n_features)
-        selected_features.append('close')  # Retain 'close' for profit calculation
-        augmented_data = augmented_data[selected_features]
-        
-        return augmented_data
+        return data[selected_features].copy()
 
     def save_scaler(self, path):
         """Save the scaler to a file"""
@@ -112,3 +104,21 @@ class Dataset(Preprocessing):
         """Load the scaler from a file"""
         self.scaler = joblib.load(path)
         logging.info(f"Scaler loaded from {path}")
+
+    def get_all_augmented_features(self, start_date, end_date):
+        """Get all features after augmentation"""
+        # Lấy dữ liệu gốc
+        filtered_data = self._filter_by_date(start_date, end_date)
+        
+        # Augment features
+        augmented_data = self.augment_features(filtered_data, strategy='advanced')
+        
+        # Loại bỏ cột time và các cột không phải số
+        feature_columns = augmented_data.select_dtypes(include=['float64', 'int64']).columns
+        
+        # Log số cột trước và sau khi augment
+        original_columns = len(filtered_data.columns)
+        augmented_columns = len(augmented_data.columns)
+        logging.info(f"Original columns: {original_columns}, After augment columns: {augmented_columns}")
+        
+        return list(feature_columns), augmented_data

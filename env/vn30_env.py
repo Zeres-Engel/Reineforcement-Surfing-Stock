@@ -8,23 +8,24 @@ class TradingEnv(gym.Env):
     """Custom Environment for Trading that follows OpenAI Gym interface"""
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, data, features_dim, action_dim, initial_balance, transaction_fee=0.001):
+    def __init__(self, data, features_dim, action_dim=1, initial_balance=10000, transaction_fee=0.001):
         super(TradingEnv, self).__init__()
 
-        # Ensure data has exactly 'features_dim' features plus 'close'
-        expected_columns = features_dim + 1  # 'close' is used for profit calculation
-        if data.shape[1] != expected_columns:
-            raise ValueError(f"Expected data with {expected_columns} columns (features_dim + 'close'), but got {data.shape[1]} columns.")
-
-        self.data = data.reset_index(drop=True)
-        self.features_dim = features_dim
+        self.data = data
+        self.features_dim = features_dim - 1
         self.action_dim = action_dim
         self.initial_balance = initial_balance
         self.transaction_fee = transaction_fee
 
-        # Define action and observation space
-        self.action_space = spaces.Box(low=-1, high=1, shape=(action_dim,), dtype=np.float32)
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(features_dim,), dtype=np.float32)
+        if 'close' not in data.columns:
+            raise ValueError("Data must contain 'close' column")
+
+        self.observation_space = spaces.Box(
+            low=-np.inf, high=np.inf, shape=(features_dim,)
+        )
+        self.action_space = spaces.Box(
+            low=-1, high=1, shape=(action_dim,)
+        )
 
         self.reset()
 
@@ -42,8 +43,9 @@ class TradingEnv(gym.Env):
 
     def _next_observation(self):
         current_step_data = self.data.iloc[self.current_step]
-        # Exclude 'close' from observations
-        state = current_step_data[:-1].values
+        # Lấy tất cả features trừ 'close'
+        features = [col for col in self.data.columns if col != 'close']
+        state = current_step_data[features].values
         return state.astype(np.float32)
 
     def step(self, action):
@@ -76,6 +78,8 @@ class TradingEnv(gym.Env):
         if self.positions == 1:
             # Holding a position, reward is the change in price
             reward = (next_close - current_close)
+            if isinstance(reward, np.ndarray):
+                reward = reward.item()  # Trích xuất giá trị scalar nếu cần
 
         # Limit the reward to avoid extreme values
         if reward < -100 or reward > 100:

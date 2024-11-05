@@ -1,4 +1,5 @@
 # utils/plot.py
+
 import matplotlib.pyplot as plt
 import os
 
@@ -33,9 +34,9 @@ def plot_validation_f1(val_f1_scores, plot_dir):
     plt.savefig(os.path.join(plot_dir, 'validation_f1_score.png'))
     plt.close()
 
-def plot_test_profit(test_profits, accuracy, f1, plot_dir):
+def plot_test_profit(profits, accuracy, f1, plot_dir):
     plt.figure(figsize=(10,5))
-    plt.plot(test_profits, label='Test Profit')
+    plt.plot(profits, label='Test Profit')
     plt.xlabel('Step')
     plt.ylabel('Profit')
     plt.title(f'Test Profit - Accuracy: {accuracy:.4f}, F1 Score: {f1:.4f}')

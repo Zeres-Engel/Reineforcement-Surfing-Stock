@@ -1,10 +1,58 @@
 # model/ppo.py
-import numpy as np
+
 import torch
 import torch.nn as nn
+from torch.distributions import MultivariateNormal
 import os
 import logging
-from model.actor_critic import ActorCritic
+
+class ActorCritic(nn.Module):
+    def __init__(self, state_dim, action_dim, action_std_init=0.5, device="cpu"):
+        super(ActorCritic, self).__init__()
+        self.device = device
+        self.state_dim = state_dim
+        
+        self.actor = nn.Sequential(
+            nn.Linear(state_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, action_dim),
+            nn.Tanh()
+        )
+        
+        self.critic = nn.Sequential(
+            nn.Linear(state_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1)
+        )
+        
+        self.action_var = torch.full((action_dim,), action_std_init**2).to(self.device)
+
+    def act(self, state):
+        if len(state.shape) == 1:
+            state = state.unsqueeze(0)
+        
+        if state.shape[1] != self.state_dim:
+            raise ValueError(f"Expected state dimension {self.state_dim}, but got {state.shape[1]}")
+            
+        action_mean = self.actor(state)
+        dist = MultivariateNormal(action_mean, torch.diag(self.action_var))
+        action = dist.sample()
+        return action.detach(), dist.log_prob(action).detach(), self.critic(state).detach()
+
+    def evaluate(self, state, action):
+        if len(state.shape) == 1:
+            state = state.unsqueeze(0)
+            
+        action_mean = self.actor(state)
+        dist = MultivariateNormal(action_mean, torch.diag_embed(self.action_var.expand_as(action_mean)))
+        action_logprobs = dist.log_prob(action)
+        state_values = self.critic(state)
+        dist_entropy = dist.entropy()
+        return action_logprobs, state_values, dist_entropy
 
 class RolloutBuffer:
     def __init__(self):
@@ -31,7 +79,7 @@ class PPO:
         self.epochs = epochs
         self.batch_size = batch_size
         self.checkpoint_dir = checkpoint_dir
-        self.best_val_profit = -np.inf
+        self.best_val_profit = -float('inf')
 
         # Define paths for best and last model checkpoints
         if self.checkpoint_dir:
@@ -100,15 +148,15 @@ class PPO:
 
         # Save last checkpoint
         if self.last_checkpoint_path:
-            self.save_checkpoint(self.last_checkpoint_path, is_best=False)
-            logging.info(f"Last model saved at {self.last_checkpoint_path}")
+            saved_path = self.save_checkpoint(self.last_checkpoint_path, is_best=False)
+            logging.info(f"Last model saved at {saved_path}")
 
         # Save best checkpoint if current validation profit is better
         if current_val_profit > self.best_val_profit:
             self.best_val_profit = current_val_profit
             if self.best_checkpoint_path:
-                self.save_checkpoint(self.best_checkpoint_path, is_best=True)
-                logging.info(f"Best model updated and saved at {self.best_checkpoint_path}")
+                saved_path = self.save_checkpoint(self.best_checkpoint_path, is_best=True)
+                logging.info(f"Best model updated and saved at {saved_path}")
 
     def save_checkpoint(self, filepath, is_best=False):
         if filepath:
@@ -121,6 +169,8 @@ class PPO:
                 logging.info(f"Best checkpoint saved at {filepath}")
             else:
                 logging.info(f"Last checkpoint saved at {filepath}")
+            return filepath  # Trả về đường dẫn đã lưu
+        return None
 
     def load_checkpoint(self, checkpoint_path):
         if os.path.exists(checkpoint_path):

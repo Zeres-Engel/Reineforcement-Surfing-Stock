@@ -1,30 +1,27 @@
 # main.py
-import argparse
-import sys
-from utils.configs import load_config
-from trainer import Trainer
-from evaluator import Evaluator
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Train or Evaluate stock prediction model using PPO")
-    parser.add_argument("--config", type=str, default="configs/FPT.yaml", help="Path to the config file (YAML format)")
-    return parser.parse_args()
+import argparse
+import yaml
+from trainer import Trainer
+import logging
 
 def main():
-    args = parse_args()
-    config = load_config(args.config)
+    parser = argparse.ArgumentParser(description="Trading Model Training and Evaluation")
+    parser.add_argument('--config', type=str, default='configs/FPT.yaml', help='Path to the configuration file.')
+    args = parser.parse_args()
 
-    mode = config['agent']['mode']
-    if mode not in ['train', 'eval']:
-        print("Invalid mode. Choose either 'train' or 'eval'.")
-        sys.exit(1)
+    # Load configuration
+    with open(args.config, 'r') as file:
+        config = yaml.safe_load(file)
 
-    if mode == 'train':
-        trainer = Trainer(config)
-        trainer.train()
-    elif mode == 'eval':
-        evaluator = Evaluator(config)
-        evaluator.evaluate()
+    # Initialize Trainer
+    trainer = Trainer(config)
+
+    # Start training and evaluation
+    trainer.train()
+
+    # Evaluate best model on test set
+    trainer.evaluate_best_model()
 
 if __name__ == "__main__":
     main()
