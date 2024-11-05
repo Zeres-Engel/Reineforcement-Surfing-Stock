@@ -247,9 +247,9 @@ class Trainer:
                     logging.info(f"Features: {self.global_best_features}")
                     logging.info(f"Best model checkpoint saved at: {best_model_path}")
 
-                    # Vẽ và lưu biểu đồ val_accuracy và val_f1score cho best_model
-                    plot_validation_accuracy(val_accuracies, self.best_model_dir)
-                    plot_validation_f1(val_f1_scores, self.best_model_dir)
+
+                    plot_validation_accuracy(val_accuracies, self.best_model_dir, combination_idx=idx + 1)
+                    plot_validation_f1(val_f1_scores, self.best_model_dir, combination_idx=idx + 1)
 
                 # Cập nhật thanh tiến trình tổng
                 combo_pbar.update(1)

@@ -8,22 +8,28 @@ class ActorCritic(nn.Module):
         super(ActorCritic, self).__init__()
         self.device = device
         self.state_dim = state_dim
-        
+        self.hidden_num = 64
+        # actor
         self.actor = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, action_dim),
+            nn.Linear(state_dim, self.hidden_num),
+            nn.Tanh(),
+            nn.Dropout(0.2),
+            nn.Linear(self.hidden_num, self.hidden_num),
+            nn.Tanh(),
+            nn.Dropout(0.2),
+            nn.Linear(self.hidden_num, action_dim),
             nn.Tanh()
         )
-        
+
+        # critic
         self.critic = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1)
+            nn.Linear(state_dim, self.hidden_num),
+            nn.Tanh(),
+            nn.Dropout(0.2),
+            nn.Linear(self.hidden_num, self.hidden_num),
+            nn.Tanh(),
+            nn.Dropout(0.2),
+            nn.Linear(self.hidden_num, 1)
         )
         
         self.action_var = torch.full((action_dim,), action_std_init**2).to(self.device)
