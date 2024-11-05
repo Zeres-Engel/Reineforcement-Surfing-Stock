@@ -1,37 +1,26 @@
 # dataloader/dataset.py
 import pandas as pd
 import logging
-import joblib
-from itertools import combinations
 from .preprocessing import Preprocessing
 
 class Dataset(Preprocessing):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        # Load raw data
         self._load_raw_data()
 
     def _load_raw_data(self):
         """Load raw data from CSV file"""
         columns_to_use = ['time'] + self.config['data']['features']
         self.data = pd.read_csv(self.config['data']['data_path'], 
-                                usecols=columns_to_use, 
-                                parse_dates=["time"])
-
+                               usecols=columns_to_use, 
+                               parse_dates=["time"])
+        
         if 'time' not in self.data.columns:
             raise KeyError("The 'time' column is missing in the dataset.")
         
-        # Process the time column
         self.data['time'] = pd.to_datetime(self.data['time'], dayfirst=True, errors='coerce')
-        if self.data['time'].isnull().any():
-            logging.warning("Một số mục thời gian không thể phân tích cú pháp và sẽ bị loại bỏ.")
-            self.data = self.data.dropna(subset=['time'])
-
-    def process_data(self, filtered_data, features):
-        """Normalize selected features"""
-        processed_data = self.fit_transform(filtered_data, features)
-        return processed_data
+        self.data = self.data.dropna(subset=['time'])
 
     def _filter_by_date(self, start_date, end_date):
         """Filter data by date range"""
@@ -44,41 +33,34 @@ class Dataset(Preprocessing):
         
         return filtered_data
 
-    def augment_features(self, data, strategy='default'):
-        """Add technical indicators and transform data"""
-        augmented_data = data.copy()
-        
-        if strategy == 'default':
-            augmented_data = self.add_technical_indicators(augmented_data)
-        elif strategy == 'advanced':
-            price_columns = ['open', 'high', 'low', 'close']
-            augmented_data = self.boxcox_transform(augmented_data, price_columns)
-            augmented_data = self.add_technical_indicators(augmented_data)
-        else:
-            raise ValueError(f"Unknown strategy: {strategy}")
-            
-        return augmented_data
-
-    def prepare_data(self, start_date, end_date, features, strategy='default', denoise=False):
-        """Prepare data pipeline without feature selection"""
+    def prepare_data(self, start_date, end_date, features, lookback_minutes=46):
+        """Main data preparation pipeline with lookback window for minute-level data"""
         try:
-            # 1. Lọc dữ liệu theo ngày
             filtered_data = self._filter_by_date(start_date, end_date)
+            augmented_data = self.add_technical_indicators(filtered_data)
             
-            # 2. Augment features
-            augmented_data = self.augment_features(filtered_data, strategy)
+            # Chuẩn hóa dữ liệu
+            numeric_columns = augmented_data.select_dtypes(include=['float64', 'int64']).columns
+            augmented_data[numeric_columns] = self.scaler.fit_transform(augmented_data[numeric_columns])
             
-            # 3. Chuẩn hóa các tính năng đã chọn
-            processed_data = self.process_data(augmented_data, features)
+            # Chọn features và chuyển thành numpy array
+            if features:
+                augmented_data = augmented_data[features]
             
-            # 4. Denoise dữ liệu nếu cần
-            if denoise:
-                processed_data = self.denoise_data(processed_data, method='median_filter')
+            sequences = []
+            targets = []
             
-            return processed_data
-        except ValueError as e:
-            logging.error(e)
-            return None
+            for i in range(len(augmented_data) - lookback_minutes):
+                sequence = augmented_data.iloc[i:i + lookback_minutes].values
+                target = augmented_data.iloc[i + lookback_minutes].values
+                sequences.append(sequence)
+                targets.append(target)
+            
+            return sequences, targets
+            
+        except Exception as e:
+            logging.error(f"Error in prepare_data: {str(e)}")
+            return None, None
 
     def get_features_data(self, data, selected_features):
         """Get data with selected features plus 'close'"""
@@ -87,34 +69,25 @@ class Dataset(Preprocessing):
         
         selected_features = list(selected_features)
         if 'close' not in selected_features:
-            selected_features.append('close')  # Retain 'close' for profit calculation
+            selected_features.append('close')
         
         if not set(selected_features).issubset(data.columns):
             missing = set(selected_features) - set(data.columns)
-            raise KeyError(f"The following selected features are missing in the data: {missing}")
+            raise KeyError(f"Missing features: {missing}")
         
         return data[selected_features].copy()
 
-    def save_scaler(self, path):
-        """Save the scaler to a file"""
-        joblib.dump(self.scaler, path)
-        logging.info(f"Scaler saved to {path}")
-
-    def load_scaler(self, path):
-        """Load the scaler from a file"""
-        self.scaler = joblib.load(path)
-        logging.info(f"Scaler loaded from {path}")
-
     def get_all_augmented_features(self, start_date, end_date):
-        """Get all features after augmentation"""
+        """Get complete list of features after augmentation"""
         filtered_data = self._filter_by_date(start_date, end_date)
+        augmented_data = self.add_technical_indicators(filtered_data)
+        return list(augmented_data.select_dtypes(include=['float64', 'int64']).columns), augmented_data
+
+    def validate_time_series(self, data):
+        """Validate time series data consistency"""
+        time_diffs = pd.to_datetime(data['time']).diff()
+        expected_diff = pd.Timedelta(minutes=5)
         
-        augmented_data = self.augment_features(filtered_data, strategy='advanced')
-        
-        feature_columns = augmented_data.select_dtypes(include=['float64', 'int64']).columns
-        
-        original_columns = len(filtered_data.columns)
-        augmented_columns = len(augmented_data.columns)
-        logging.info(f"Original columns: {original_columns}, After augment columns: {augmented_columns}")
-        
-        return list(feature_columns), augmented_data
+        if not all(time_diffs.dropna() == expected_diff):
+            logging.warning("Irregular time intervals detected in data")
+            # Có thể thêm resampling hoặc interpolation ở đây

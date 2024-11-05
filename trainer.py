@@ -62,33 +62,22 @@ class Trainer:
             train_data = self.dataset.prepare_data(
                 start_date=self.config['data']['start_train_date'],
                 end_date=self.config['data']['end_train_date'],
-                features=features,
-                strategy='default',  # Bạn có thể thay đổi chiến lược augment nếu cần
-                denoise=True
+                features=features
             )
 
             # Chuẩn bị dữ liệu validation
             val_data = self.dataset.prepare_data(
                 start_date=self.config['data']['start_validation_date'],
                 end_date=self.config['data']['end_validation_date'],
-                features=features,
-                strategy='default',
-                denoise=True
+                features=features
             )
 
             # Chuẩn bị dữ liệu test
             test_data = self.dataset.prepare_data(
                 start_date=self.config['data']['start_test_date'],
                 end_date=self.config['data']['end_test_date'],
-                features=features,
-                strategy='default',
-                denoise=True
+                features=features
             )
-
-            # Chọn các feature đã chọn và thêm 'close'
-            train_data = self.dataset.get_features_data(train_data, selected_features=features)
-            val_data = self.dataset.get_features_data(val_data, selected_features=features)
-            test_data = self.dataset.get_features_data(test_data, selected_features=features)
 
             return train_data, val_data, test_data
         except ValueError as e:
@@ -213,7 +202,7 @@ class Trainer:
                 self.combination_accuracies.append(max(val_accuracies))
                 self.combination_feature_sets.append(feature_set)
                 
-                # Vẽ và lưu biểu đồ val_accuracy và val_f1score cho last_model
+                # Vẽ và lưu biểu đ val_accuracy và val_f1score cho last_model
                 plot_validation_accuracy(val_accuracies, self.last_model_dir)
                 plot_validation_f1(val_f1_scores, self.last_model_dir)
 
@@ -240,7 +229,7 @@ class Trainer:
                         cumulative_test_profit,
                         self.best_model_dir,
                         model_type='best',
-                        combination_idx=idx + 1
+                        combination_idx='best'
                     )
                     
                     logging.info(f"New global best model! Val F1: {self.global_best_val_f1:.4f}, Val Accuracy: {self.global_best_val_accuracy:.4f}")
@@ -248,8 +237,8 @@ class Trainer:
                     logging.info(f"Best model checkpoint saved at: {best_model_path}")
 
 
-                    plot_validation_accuracy(val_accuracies, self.best_model_dir, combination_idx=idx + 1)
-                    plot_validation_f1(val_f1_scores, self.best_model_dir, combination_idx=idx + 1)
+                    plot_validation_accuracy(val_accuracies, self.best_model_dir, combination_idx='best')
+                    plot_validation_f1(val_f1_scores, self.best_model_dir, combination_idx='best')
 
                 # Cập nhật thanh tiến trình tổng
                 combo_pbar.update(1)
