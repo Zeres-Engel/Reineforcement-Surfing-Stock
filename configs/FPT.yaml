@@ -23,7 +23,7 @@ environment:
 
 agent:
   train:
-    episodes: 20
+    episodes: 2
     gamma: 0.99
     batch_size: 300
     lr_actor: 0.0003
