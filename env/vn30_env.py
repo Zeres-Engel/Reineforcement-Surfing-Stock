@@ -34,7 +34,7 @@ class TradingEnv(gym.Env):
         self.max_net_worth = self.initial_balance
         self.total_profit = 0
         self.current_step = 0
-        self.positions = 0  # 1 if holding a position, 0 otherwise
+        self.positions = 0
         self.buy_price = 0
         self.done = False
 
@@ -73,12 +73,6 @@ class TradingEnv(gym.Env):
             self.balance += current_close * (1 - self.transaction_fee)
             reward = profit
             logging.debug(f"Sold at {current_close}, Profit: {profit}")
-
-        if self.positions == 1:
-            # Holding a position, reward is the change in price
-            reward = (next_close - current_close)
-            if isinstance(reward, np.ndarray):
-                reward = reward.item()  # Trích xuất giá trị scalar nếu cần
 
         # Limit the reward to avoid extreme values
         if reward < -100 or reward > 100:

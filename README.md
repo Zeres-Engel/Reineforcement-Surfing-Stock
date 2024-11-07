@@ -103,32 +103,95 @@ These windows were selected because:
 
 ## Training Pipeline
 
-### Feature Selection Process
-1. **Feature Generation**:
-   - Generate all technical indicators
-   - Create feature combinations of specified dimension
-   - Limit combinations to manage computational resources
+<div>
+  <p align="center">
+    <img src="images/training_pipeline.png" width="800">
+    <br>
+    <em>Feature Selection and Training Pipeline Overview</em>
+  </p>
+</div>
 
-2. **Model Training**:
+The training pipeline implements a unique combinatorial feature selection approach:
+
+1. **Feature Generation**:
+   - Generate comprehensive technical indicators across multiple time windows
+   - Create base price features (H-L, O-C)
+   - Apply preprocessing (normalization, denoising)
+
+2. **Feature Combination Search**:
+   - Generate all possible feature combinations of specified dimension
+   - Filter combinations based on computational constraints
+   - Each combination creates a unique feature set for model training
+
+3. **Model Training and Selection**:
    - Train separate models for each feature combination
    - Track validation metrics (F1-score, Accuracy)
-   - Save checkpoints for best performing models
+   - Select best performing feature set based on validation results
 
-3. **Model Selection**:
-   - Select best model based on validation metrics
-   - Evaluate final performance on test set
-   - Save both "last" and "best" model states
+### Training Process
 
-### Training Parameters
-```python
-{
-    'learning_rate': 0.0003,
-    'gamma': 0.99,
-    'epsilon': 0.2,
-    'epochs': 10,
-    'batch_size': 64
-}
-```
+<div>
+  <p align="center">
+    <img src="images/training_process.png" width="800">
+    <br>
+    <em>Model Training Process Workflow</em>
+  </p>
+</div>
+
+The training process follows these steps:
+
+1. **Data Preparation**:
+   - Split data into train/validation/test sets
+   - Apply feature engineering for current combination
+   - Normalize and preprocess features
+
+2. **Model Training**:
+   - Initialize PPO agent with current feature set
+   - Train for specified number of episodes
+   - Update policy using PPO algorithm
+   - Track performance metrics
+
+3. **Validation**:
+   - Evaluate model on validation set
+   - Calculate accuracy and F1-score
+   - Update best model if performance improves
+   - Save model checkpoints
+
+### Evaluation Process
+
+<div>
+  <p align="center">
+    <img src="images/eval_process.png" width="800">
+    <br>
+    <em>Model Evaluation Workflow</em>
+  </p>
+</div>
+
+The evaluation pipeline consists of:
+
+1. **Model Selection**:
+   - Load best model from training phase
+   - Use optimal feature combination identified
+
+2. **Performance Metrics**:
+   - Trading metrics:
+     - Total profit
+     - Win rate
+     - Sharpe ratio
+   - Classification metrics:
+     - Accuracy
+     - F1-score
+
+3. **Trading Simulation**:
+   - Run model on unseen test data
+   - Execute trades based on model predictions
+   - Track cumulative profit
+   - Calculate final performance metrics
+
+4. **Results Visualization**:
+   - Plot cumulative profit over time
+   - Generate validation metric graphs
+   - Create performance summary reports
 
 ## Evaluation Results
 
