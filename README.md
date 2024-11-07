@@ -111,22 +111,22 @@ These windows were selected because:
   </p>
 </div>
 
-The training pipeline implements a unique combinatorial feature selection approach:
+### Training Configuration
+```yaml
+# Data Split Dates
+training:
+  start_train_date: "2023-11-09"
+  end_train_date: "2024-03-31"
+  start_validation_date: "2024-04-01"
+  end_validation_date: "2024-07-31"
+  start_test_date: "2024-08-01"
+  end_test_date: "2024-11-01"
+```
 
-1. **Feature Generation**:
-   - Generate comprehensive technical indicators across multiple time windows
-   - Create base price features (H-L, O-C)
-   - Apply preprocessing (normalization, denoising)
-
-2. **Feature Combination Search**:
-   - Generate all possible feature combinations of specified dimension
-   - Filter combinations based on computational constraints
-   - Each combination creates a unique feature set for model training
-
-3. **Model Training and Selection**:
-   - Train separate models for each feature combination
-   - Track validation metrics (F1-score, Accuracy)
-   - Select best performing feature set based on validation results
+The pipeline implements a three-stage evaluation process:
+1. **Training** (2023-11-09 to 2024-03-31): Model learning and feature combination search
+2. **Validation** (2024-04-01 to 2024-07-31): Model selection and hyperparameter tuning
+3. **Testing** (2024-08-01 to 2024-11-01): Final performance evaluation
 
 ### Training Process
 
@@ -138,24 +138,7 @@ The training pipeline implements a unique combinatorial feature selection approa
   </p>
 </div>
 
-The training process follows these steps:
-
-1. **Data Preparation**:
-   - Split data into train/validation/test sets
-   - Apply feature engineering for current combination
-   - Normalize and preprocess features
-
-2. **Model Training**:
-   - Initialize PPO agent with current feature set
-   - Train for specified number of episodes
-   - Update policy using PPO algorithm
-   - Track performance metrics
-
-3. **Validation**:
-   - Evaluate model on validation set
-   - Calculate accuracy and F1-score
-   - Update best model if performance improves
-   - Save model checkpoints
+The model uses a combinatorial feature selection approach, training multiple PPO agents with different feature sets to find the optimal combination. Performance is tracked using validation metrics (F1-score, Accuracy) to select the best model.
 
 ### Evaluation Process
 
@@ -167,31 +150,10 @@ The training process follows these steps:
   </p>
 </div>
 
-The evaluation pipeline consists of:
-
-1. **Model Selection**:
-   - Load best model from training phase
-   - Use optimal feature combination identified
-
-2. **Performance Metrics**:
-   - Trading metrics:
-     - Total profit
-     - Win rate
-     - Sharpe ratio
-   - Classification metrics:
-     - Accuracy
-     - F1-score
-
-3. **Trading Simulation**:
-   - Run model on unseen test data
-   - Execute trades based on model predictions
-   - Track cumulative profit
-   - Calculate final performance metrics
-
-4. **Results Visualization**:
-   - Plot cumulative profit over time
-   - Generate validation metric graphs
-   - Create performance summary reports
+Final evaluation is performed on unseen test data, measuring:
+- Trading metrics (profit, win rate, Sharpe ratio)
+- Classification metrics (accuracy, F1-score)
+- Performance visualization and reporting
 
 ## Evaluation Results
 
