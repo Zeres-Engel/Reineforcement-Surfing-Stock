@@ -69,7 +69,7 @@ The seasonal analysis reveals:
 
 Based on the periodogram analysis, we identified significant frequencies that correspond to these optimal window sizes:
 ```python
-windows = [419, 503, 559, 629, 839, 1007, 1258, 1678, 2516, 5033]
+windows = [419, 503, 559, 629, 839, 1007, 1258, 1678]
 ```
 
 These windows were selected because:
